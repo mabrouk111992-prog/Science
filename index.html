@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة الإنتاج</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --primary:#1a3a5c;--primary-light:#2563a8;--accent:#e8a020;
+  --success:#16a34a;--danger:#dc2626;--bg:#f0f4f8;
+  --card:#fff;--border:#cbd5e1;--text:#1e293b;--muted:#64748b;
+  --green-light:#dcfce7;--blue-light:#dbeafe;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+header{background:var(--primary);color:#fff;padding:0 16px;display:flex;align-items:center;
+  justify-content:space-between;min-height:56px;box-shadow:0 2px 12px rgba(0,0,0,.2);
+  position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:4px;padding:8px 16px}
+header h1{font-size:1rem;font-weight:900}
+.nav-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.nav-tab{padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;
+  font-size:.78rem;font-weight:600;border:none;background:transparent;
+  color:rgba(255,255,255,.7);transition:all .2s}
+.nav-tab:hover{background:rgba(255,255,255,.15);color:#fff}
+.nav-tab.active{background:var(--accent);color:#fff}
+
+main{padding:16px;max-width:1300px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+
+.card{background:var(--card);border-radius:14px;padding:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+.card-title{font-size:.95rem;font-weight:700;color:var(--primary);
+  margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--bg);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:.77rem;font-weight:700;color:var(--muted)}
+.form-group input,.form-group select,.form-group textarea{
+  padding:8px 11px;border:2px solid var(--border);border-radius:9px;
+  font-family:'Cairo',sans-serif;font-size:.9rem;color:var(--text);
+  transition:border-color .2s;background:#fff;direction:rtl}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary-light)}
+.form-group textarea{resize:vertical;min-height:60px}
+
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px}
+.mat-item{display:flex;align-items:center;gap:7px;background:var(--green-light);
+  border-radius:9px;padding:6px 10px;border:1.5px solid #bbf7d0}
+.mat-item label{font-size:.76rem;font-weight:700;color:#15803d;flex:1}
+.mat-item input{width:78px;padding:5px 7px;border:1.5px solid #86efac;
+  border-radius:7px;font-family:'Cairo',sans-serif;font-size:.86rem;
+  text-align:center;background:#fff}
+.mat-unit{font-size:.7rem;color:#15803d;font-weight:600}
+
+.btn{padding:9px 18px;border-radius:9px;border:none;font-family:'Cairo',sans-serif;
+  font-size:.87rem;font-weight:700;cursor:pointer;transition:all .2s;
+  display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-success{background:var(--success);color:#fff}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary)}
+.btn-outline:hover{background:var(--primary);color:#fff}
+.btn-gray{background:#94a3b8;color:#fff}
+.btn-sm{padding:5px 11px;font-size:.76rem}
+.btn-group{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:11px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:var(--primary);color:#fff;padding:10px 11px;text-align:right;
+  font-weight:700;white-space:nowrap}
+td{padding:8px 11px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+.tr-total{background:#f0f4f8!important;font-weight:700}
+.tr-total td{border-top:2px solid var(--border)}
+
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.74rem;font-weight:700}
+.badge-blue{background:var(--blue-light);color:var(--primary-light)}
+.badge-green{background:var(--green-light);color:var(--success)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{border-radius:13px;padding:16px;text-align:center;color:#fff}
+.stat-card.blue{background:var(--primary)}.stat-card.orange{background:var(--accent)}
+.stat-card.green{background:var(--success)}.stat-card.purple{background:#7c3aed}
+.stat-num{font-size:1.7rem;font-weight:900}.stat-lbl{font-size:.72rem;opacity:.85;margin-top:2px}
+
+/* FILTERS ROW */
+.filter-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;
+  padding:12px;background:var(--bg);border-radius:10px}
+.filter-row .form-group{min-width:150px}
+.filter-row label{font-size:.75rem;font-weight:700;color:var(--muted)}
+
+/* REGISTRY TABLE ROW */
+.reg-table th input,.reg-table th select{
+  width:100%;padding:4px 7px;border:1.5px solid rgba(255,255,255,.4);
+  border-radius:6px;font-family:'Cairo',sans-serif;font-size:.74rem;
+  background:rgba(255,255,255,.15);color:#fff;margin-top:4px;direction:rtl}
+.reg-table th input::placeholder{color:rgba(255,255,255,.6)}
+.reg-table th input:focus,.reg-table th select:focus{outline:none;background:rgba(255,255,255,.25)}
+.reg-table th select option{color:#000;background:#fff}
+
+/* EDIT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;max-width:720px;
+  width:96%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{font-size:1rem;font-weight:900;color:var(--primary);
+  margin-bottom:16px;text-align:center}
+
+/* PRINT DOC */
+.print-doc{border:2px solid var(--primary);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.print-doc-header{background:var(--primary);color:#fff;padding:11px 16px;
+  text-align:center;font-size:.98rem;font-weight:900}
+.print-doc-body{padding:16px}
+.print-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.print-info-item{background:var(--bg);border-radius:8px;padding:6px 10px}
+.print-info-item .lbl{font-size:.7rem;color:var(--muted);font-weight:700}
+.print-info-item .val{font-size:.92rem;font-weight:700;color:var(--primary)}
+.print-mat-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:10px}
+.print-mat-table th{background:var(--primary);color:#fff;padding:7px 9px;text-align:right}
+.print-mat-table td{padding:6px 9px;border-bottom:1px solid var(--border);text-align:right}
+.print-sigs{display:grid;gap:10px;margin-top:16px}
+.print-sig{border-top:2px solid var(--primary);padding-top:7px;
+  text-align:center;font-size:.76rem;font-weight:700;color:var(--primary)}
+
+/* DAILY PRINT */
+.daily-print-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.daily-print-table th{background:var(--primary);color:#fff;padding:7px 8px;text-align:right;font-size:.74rem}
+.daily-print-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right}
+
+.oee-bar-wrap{background:#e2e8f0;border-radius:20px;height:24px;overflow:hidden;margin-bottom:6px}
+.oee-bar{height:100%;border-radius:20px;transition:width 1s ease;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.82rem}
+
+.alert{padding:10px 14px;border-radius:9px;margin-bottom:12px;font-size:.86rem;font-weight:600;display:none}
+.alert.show{display:block}
+.alert-success{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+.alert-error{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+
+.empty-state{text-align:center;padding:36px 16px;color:var(--muted)}
+.empty-state .icon{font-size:2.5rem;margin-bottom:8px}
+
+#offline-banner{display:none;background:#dc2626;color:#fff;text-align:center;
+  padding:7px;font-size:.82rem;font-weight:700}
+
+.chart-wrap{position:relative;height:300px}
+
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:fixed;top:0;left:0;width:100%;font-family:'Cairo',sans-serif}
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:640px){
+  header{padding:6px 10px;gap:6px}
+  header h1{font-size:.85rem}
+  .nav-tabs{gap:2px;width:100%}
+  .nav-tab{padding:5px 7px;font-size:.7rem;flex:1;text-align:center}
+  /* hide emoji on very small */
+  .nav-tab{white-space:nowrap}
+
+  main{padding:10px 8px}
+  .card{padding:12px 10px;border-radius:10px;margin-bottom:12px}
+  .card-title{font-size:.85rem;gap:5px}
+
+  .form-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .form-group input,.form-group select,.form-group textarea{font-size:.85rem;padding:7px 9px}
+  .form-group label{font-size:.72rem}
+
+  .mat-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .mat-item{padding:5px 7px}
+  .mat-item label{font-size:.7rem}
+  .mat-item input{width:60px;font-size:.8rem}
+
+  .btn{padding:8px 12px;font-size:.8rem}
+  .btn-sm{padding:5px 8px;font-size:.72rem}
+  .btn-group{gap:5px}
+
+  .stats-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .stat-num{font-size:1.35rem}
+  .stat-lbl{font-size:.66rem}
+  .stat-card{padding:12px 8px}
+
+  .table-wrap{border-radius:8px}
+  table{font-size:.75rem}
+  th,td{padding:6px 7px}
+
+  .filter-row{gap:6px;padding:8px}
+  .filter-row .form-group{min-width:120px}
+
+  /* سجل الباتشات — أزرار أصغر */
+  #page-batches .card-title{flex-direction:column;align-items:flex-start;gap:6px}
+  #page-batches .card-title > div{display:flex;flex-wrap:wrap;gap:4px;width:100%}
+  #page-batches .card-title > div .btn{flex:1;min-width:80px;justify-content:center;font-size:.7rem}
+
+  /* فلاتر السجل */
+  #page-batches .card > div[style*="grid"]{grid-template-columns:1fr 1fr!important}
+
+  .modal{padding:14px;border-radius:12px;width:98%}
+  .modal-title{font-size:.9rem}
+  .print-info-grid{grid-template-columns:1fr 1fr}
+  .print-info-item .val{font-size:.82rem}
+
+  .chart-wrap{height:220px}
+
+  /* OEE bars */
+  .oee-bar{font-size:.72rem}
+
+  /* مسحوبات */
+  #page-makhzoun .card-title{flex-wrap:wrap;gap:6px}
+
+  /* الإحصائيات */
+  #stats-cards{grid-template-columns:1fr 1fr}
+
+  /* نسخة احتياطية — تظهر أصغر في الموبايل */
+  header nav button[onclick="exportBackupExcel()"]{display:none}
+  /* بدلًا منه زر في صفحة السجل */
+}
+
+@media(max-width:380px){
+  .form-grid{grid-template-columns:1fr}
+  .mat-grid{grid-template-columns:1fr 1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .nav-tab{padding:4px 4px;font-size:.65rem}
+}
+</style>
+</head>
+<body>
+
+<div id="offline-banner">⚠️ غير متصل — البيانات محفوظة محلياً</div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:9px">
+    <span style="font-size:1.4rem">🏭</span>
+    <h1>نظام إدارة الإنتاج</h1>
+    <span id="conn-status" style="font-size:.72rem;font-weight:700;margin-right:4px">🟡 جاري الاتصال...</span>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('page-entry')">➕ إدخال باتش</button>
+    <button class="nav-tab" onclick="showPage('page-batches')">📋 السجل</button>
+    <button class="nav-tab" onclick="showPage('page-makhzoun')">📦 المسحوبات</button>
+    <button class="nav-tab" onclick="showPage('page-stats')">📊 إحصائيات</button>
+    <button class="nav-tab" onclick="showPage('page-oee')">⚙️ OEE</button>
+    <button onclick="exportBackupExcel()" style="margin-right:6px;padding:5px 11px;border-radius:8px;background:#e8a020;color:#fff;border:none;font-family:Cairo,sans-serif;font-size:.75rem;font-weight:700;cursor:pointer" title="حفظ نسخة احتياطية">💾 نسخة احتياطية</button>
+    <button onclick="openStorageInfo()" style="padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.2);color:#fff;border:none;font-family:Cairo,sans-serif;font-size:.75rem;font-weight:700;cursor:pointer" title="معلومات التخزين">ℹ️</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- =========== PAGE 1: ENTRY =========== -->
+<div class="page active" id="page-entry">
+  <div id="alert-entry" class="alert"></div>
+
+  <!-- بيانات الباتش -->
+  <div class="card">
+    <div class="card-title">📝 بيانات الباتش
+      <span style="font-size:.75rem;color:var(--muted);font-weight:400;margin-right:auto">احفظ البيانات أولاً ثم أضف الخامات لاحقاً من السجل</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>التاريخ</label><input type="date" id="f-date"></div>
+      <div class="form-group"><label>اليوم</label><input type="text" id="f-day" readonly></div>
+      <div class="form-group"><label>رقم الباتش</label><input type="text" id="f-batch-num" placeholder="مثال: 11021260506"></div>
+      <div class="form-group"><label>الحلة</label>
+        <select id="f-reactor"><option value="">اختر</option><option>1</option><option>2</option><option>3</option></select>
+      </div>
+      <div class="form-group"><label>التركيبة</label>
+        <select id="f-formula"><option value="">اختر</option></select>
+      </div>
+      <div class="form-group"><label>التشغيلة</label>
+        <select id="f-shift"><option value="">اختر</option><option>الأولى</option><option>الثانية</option><option>الثالثة</option></select>
+      </div>
+      <div class="form-group"><label>بدء ملء الماء</label><input type="time" id="f-water-start"></div>
+      <div class="form-group"><label>بدء التشغيل</label><input type="time" id="f-op-start"></div>
+      <div class="form-group"><label>دخول العينة</label><input type="time" id="f-sample"></div>
+      <div class="form-group"><label>انتهاء التشغيلة</label><input type="time" id="f-op-end"></div>
+      <div class="form-group"><label>التركيز %</label><input type="number" id="f-conc" step=".01" placeholder="23.5"></div>
+      <div class="form-group"><label>اللزوجة</label><input type="number" id="f-visc" placeholder="450"></div>
+      <div class="form-group"><label>التصفية (كجم)</label><input type="number" id="f-filter" placeholder="13000"></div>
+      <div class="form-group"><label>تركيز نص الشغل %</label><input type="number" id="f-conc-mid" step=".01"></div>
+      <div class="form-group"><label>لزوجة نص الشغل</label><input type="number" id="f-visc-mid"></div>
+    </div>
+    <div class="form-group"><label>إضافات</label><textarea id="f-additions" placeholder="مثال: 300ك 40تي قديم"></textarea></div>
+    <div class="form-group" style="margin-top:10px"><label>ملاحظات</label><textarea id="f-notes"></textarea></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveBatch()">💾 حفظ بيانات الباتش</button>
+      <button class="btn btn-outline" onclick="clearForm()">🗑️ مسح</button>
+    </div>
+  </div>
+
+  <!-- طلب الصرف (الخامات) -->
+  <div class="card">
+    <div class="card-title">🧪 خامات طلب الصرف
+      <div style="margin-right:auto;display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="openAddMat()">➕ خامة جديدة</button>
+        <button class="btn btn-outline btn-sm" onclick="openAddFormula()">➕ تركيبة جديدة</button>
+      </div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.82rem;color:#92400e">
+      💡 اكتب الكميات هنا ثم اضغط <b>طباعة طلب الصرف</b> — سيطبع الخامات المكتوبة فقط
+    </div>
+    <div class="mat-grid" id="mat-grid"></div>
+    <div class="btn-group">
+      <button class="btn btn-accent" onclick="printSarf()">🖨️ طباعة طلب الصرف</button>
+      <button class="btn btn-success" onclick="printTasleem()">🖨️ طباعة إذن التسليم</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PAGE 2: BATCHES =========== -->
+<div class="page" id="page-batches">
+  <div class="card">
+    <div class="card-title">📋 سجل الباتشات
+      <div style="margin-right:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <!-- طباعة يوم -->
+        <input type="date" id="print-day-input" style="padding:5px 10px;border:2px solid var(--border);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.8rem">
+        <button class="btn btn-accent btn-sm" onclick="printDayReport()">🖨️ طباعة اليوم</button>
+        <button class="btn btn-success btn-sm" onclick="exportDayExcel()">📥 Excel اليوم</button>
+        <button class="btn btn-sm" style="background:#25D366;color:#fff" onclick="snapDay()">📸 صورة واتساب</button>
+        <button class="btn btn-outline btn-sm" onclick="exportAllExcel()">📥 Excel الكل</button>
+        <button class="btn btn-accent btn-sm" onclick="exportBackupExcel()" title="نسخة احتياطية من كل البيانات">💾 احتياطي</button>
+      </div>
+    </div>
+
+    <!-- فلاتر -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
+      <div class="form-group"><label>🔍 رقم الباتش</label>
+        <input type="text" id="f-filter-batch" placeholder="ابحث..." oninput="renderBatches()">
+      </div>
+      <div class="form-group"><label>📅 التاريخ</label>
+        <input type="date" id="f-filter-date" oninput="renderBatches()">
+      </div>
+      <div class="form-group"><label>🧪 التركيبة</label>
+        <select id="f-filter-formula" onchange="renderBatches()">
+          <option value="">الكل</option>
+        </select>
+      </div>
+      <button class="btn btn-gray btn-sm" onclick="clearFilters()">✖ مسح الفلاتر</button>
+    </div>
+
+    <div id="batches-table-wrap"></div>
+    <div class="empty-state" id="empty-batches" style="display:none">
+      <div class="icon">📭</div><p>لا يوجد باتشات مسجلة</p>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PAGE 3: MAKHZOUN =========== -->
+<div class="page" id="page-makhzoun">
+  <div class="card">
+    <div class="card-title">📦 مسحوبات المخزن
+      <div style="margin-right:auto;display:flex;gap:8px;align-items:center">
+        <select id="makh-month" style="padding:6px 10px;border:2px solid var(--border);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.82rem" onchange="renderMakhzoun()"></select>
+        <button class="btn btn-outline btn-sm" onclick="exportMakhzounExcel()">📥 Excel</button>
+      </div>
+    </div>
+    <div id="makhzoun-content"></div>
+  </div>
+</div>
+
+<!-- =========== PAGE 4: STATS =========== -->
+<div class="page" id="page-stats">
+  <div class="card">
+    <div class="card-title">📊 الإنتاج السنوي
+      <select id="stats-year" style="margin-right:auto;padding:6px 10px;border:2px solid var(--border);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.82rem" onchange="renderStats()"></select>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-production"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚙️ OEE الشهري</div>
+    <div class="chart-wrap"><canvas id="chart-oee"></canvas></div>
+  </div>
+  <div class="stats-grid" id="stats-cards"></div>
+  <div class="card">
+    <div class="card-title">📦 إنتاج كل تركيبة</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>التركيبة</th><th>عدد الباتشات</th><th>إجمالي (كجم)</th><th>إجمالي (طن)</th></tr></thead>
+      <tbody id="formula-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- =========== PAGE 5: OEE =========== -->
+<div class="page" id="page-oee">
+  <div class="card">
+    <div class="card-title">📅 فلتر الفترة</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="min-width:148px"><label>من</label><input type="date" id="oee-from"></div>
+      <div class="form-group" style="min-width:148px"><label>إلى</label><input type="date" id="oee-to"></div>
+      <div class="form-group" style="min-width:175px"><label>أيام الإنتاج الفعلية</label><input type="number" id="oee-days" placeholder="22"></div>
+      <div class="form-group" style="min-width:175px"><label>الباتشات السليمة (Quality)</label><input type="number" id="oee-good" placeholder="عدد"></div>
+      <button class="btn btn-primary" onclick="calcOEE()">🔄 احسب</button>
+    </div>
+  </div>
+  <div id="oee-result" style="display:none">
+    <div class="stats-grid" id="oee-stat-cards"></div>
+    <div class="card" style="text-align:center">
+      <div class="card-title" style="justify-content:center">⚙️ مؤشر OEE</div>
+      <div id="oee-gauge"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏱️ تحليل الوقت</div>
+      <div class="table-wrap"><table><thead><tr><th>البيان</th><th>القيمة</th></tr></thead>
+      <tbody id="oee-time-tbody"></tbody></table></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-success" onclick="exportOEEExcel()">📥 تصدير Excel</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- PRINT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="printArea"></div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+      <button class="btn btn-outline" onclick="closeModal()">✖ إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal" style="max-width:820px">
+    <div class="modal-title">✏️ تعديل بيانات الباتش</div>
+    <div id="edit-form-content"></div>
+    <div class="btn-group" style="justify-content:center">
+      <button class="btn btn-success" onclick="saveEdit()">💾 حفظ التعديلات</button>
+      <button class="btn btn-outline" onclick="closeEditModal()">✖ إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FORMULA MODAL -->
+<div class="modal-overlay" id="add-formula-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">➕ إدارة التركيبات</div>
+    <div class="form-group" style="margin-bottom:12px"><label>اسم التركيبة الجديدة</label>
+      <input type="text" id="new-formula-name" placeholder="مثال: 800G">
+    </div>
+    <div class="btn-group" style="margin-bottom:16px">
+      <button class="btn btn-primary" onclick="addNewFormula()">إضافة</button>
+    </div>
+    <div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:8px">التركيبات الحالية:</div>
+    <div id="formula-list-manage"></div>
+    <div class="btn-group" style="justify-content:center;margin-top:14px">
+      <button class="btn btn-outline" onclick="document.getElementById('add-formula-modal').classList.remove('show')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MAT MODAL -->
+<div class="modal-overlay" id="add-mat-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">➕ إضافة خامة جديدة</div>
+    <div class="form-group"><label>اسم الخامة</label>
+      <input type="text" id="new-mat-name" placeholder="اسم الخامة">
+    </div>
+    <div class="btn-group" style="justify-content:center;margin-top:14px">
+      <button class="btn btn-primary" onclick="addNewMaterial()">إضافة</button>
+      <button class="btn btn-outline" onclick="document.getElementById('add-mat-modal').classList.remove('show')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- STORAGE INFO MODAL -->
+<div class="modal-overlay" id="storage-info-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">💾 أين تُحفظ البيانات؟</div>
+    <div style="line-height:2;font-size:.88rem;color:#1e293b">
+      <div style="background:#dbeafe;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <b style="color:#1a3a5c">📂 مكان التخزين:</b><br>
+        البيانات محفوظة في <b>localStorage</b> بالمتصفح على جهازك تلقائياً.
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <b style="color:#15803d">✅ إيه اللي بيتحفظ:</b><br>
+        • كل الباتشات وبياناتها<br>
+        • أسماء الخامات والتركيبات<br>
+        • بيانات OEE الشهرية
+      </div>
+      <div style="background:#fef9c3;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <b style="color:#92400e">⚠️ تحذير مهم:</b><br>
+        لو <b>مسحت بيانات المتصفح / Cache</b> هتتمسح البيانات!<br>
+        لو عاوز تنقل البرنامج لجهاز تاني اعمل <b>نسخة احتياطية Excel</b> أولاً.
+      </div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <b style="color:#1a3a5c">🔄 نقل البرنامج لجهاز تاني:</b><br>
+        1️⃣ اضغط <b>💾 احتياطي</b> من صفحة السجل — هيتحمل Excel بكل البيانات<br>
+        2️⃣ انقل ملف الـ HTML للجهاز الجديد<br>
+        3️⃣ البيانات مش هتنقل تلقائي — الـ Excel هو النسخة الاحتياطية<br>
+        <span style="color:#dc2626;font-size:.8rem">* مفيش طريقة لاستعادة بيانات localStorage من Excel تلقائياً، لكن عندك كل البيانات مرتبة</span>
+      </div>
+      <div id="storage-stats" style="background:#1a3a5c;color:#fff;border-radius:10px;padding:12px 14px;text-align:center;font-weight:700"></div>
+    </div>
+    <div class="btn-group" style="justify-content:center;margin-top:16px">
+      <button class="btn btn-accent" onclick="exportBackupExcel()">💾 احفظ نسخة احتياطية الآن</button>
+      <button class="btn btn-outline" onclick="document.getElementById('storage-info-modal').classList.remove('show')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ===================================================
+// CONSTANTS & DATA
+// ===================================================
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DEF_MATS=['40T High Visc.','40T Low Visc.','M500','CW','CWN','Taylus 592','Taylus 336','Taylus 96','Taylus 600','Dispers N50','Antifoam','Ammonia','EJ3','مادة حافظة','Q1','D20','25 (Emulsion)','200 (Emulsion)','700 (Emulsion)','Wetting','سالفونك','صودا','ملح','Texanol','DOP','Peg.400','NP9','Silicon','SNF','PTF','ماء','معطر'];
+const DEF_FORMULAS=['25','200','700G','700N','700R','3000','WETTING','AF'];
+
+// ===================================================
+// FIREBASE CONFIG
+// ===================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyADijkUlcOz5Jytglnq4K0CQTWUhq7_JaQ",
+  authDomain: "flutter-ai-playground-ef987.firebaseapp.com",
+  projectId: "flutter-ai-playground-ef987",
+  storageBucket: "flutter-ai-playground-ef987.firebasestorage.app",
+  messagingSenderId: "58956552170",
+  appId: "1:58956552170:web:d371a0adf07ed0db1c0493"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+// مؤشر الاتصال
+let _online = false;
+function setOnline(v){
+  _online=v;
+  const el=document.getElementById('conn-status');
+  if(el){el.textContent=v?'🟢 متصل':'🔴 غير متصل';el.style.color=v?'#16a34a':'#dc2626';}
+}
+
+// Cache محلي للسرعة
+let _cache={batches:[],materials:DEF_MATS,formulas:DEF_FORMULAS,oee:{}};
+
+async function fbGet(key){
+  try{
+    const snap=await getDoc(doc(db,'production',key));
+    if(snap.exists())return snap.data().value;
+  }catch(e){console.warn('fbGet',key,e);}
+  return null;
+}
+async function fbSet(key,value){
+  try{
+    await setDoc(doc(db,'production',key),{value});
+    setOnline(true);
+    return true;
+  }catch(e){
+    console.warn('fbSet',key,e);
+    setOnline(false);
+    // fallback localStorage
+    localStorage.setItem(key,JSON.stringify(value));
+    return false;
+  }
+}
+
+// تحميل كل البيانات عند الفتح
+async function loadAllData(){
+  showSyncIndicator(true);
+  try{
+    const [b,m,f,o]=await Promise.all([fbGet('batches'),fbGet('materials'),fbGet('formulas'),fbGet('oee_store')]);
+    if(b)_cache.batches=b;
+    if(m)_cache.materials=m;
+    if(f)_cache.formulas=f;
+    if(o)_cache.oee=o;
+    setOnline(true);
+  }catch(e){
+    // استخدم localStorage كـ fallback
+    try{_cache.batches=JSON.parse(localStorage.getItem('batches')||'[]');}catch{}
+    try{_cache.materials=JSON.parse(localStorage.getItem('materials')||JSON.stringify(DEF_MATS));}catch{}
+    try{_cache.formulas=JSON.parse(localStorage.getItem('formulas')||JSON.stringify(DEF_FORMULAS));}catch{}
+    try{_cache.oee=JSON.parse(localStorage.getItem('oee_store')||'{}');}catch{}
+    setOnline(false);
+  }
+  showSyncIndicator(false);
+  renderAll();
+}
+
+function showSyncIndicator(show){
+  let el=document.getElementById('sync-indicator');
+  if(!el){
+    el=document.createElement('div');
+    el.id='sync-indicator';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1a3a5c,#e8a020,#16a34a);z-index:9999;transition:opacity .3s';
+    document.body.appendChild(el);
+  }
+  el.style.opacity=show?'1':'0';
+}
+
+// الدوال الأساسية — الآن بتقرأ من الـ cache وبتحفظ على Firestore
+const getMats=()=>_cache.materials||DEF_MATS;
+const setMats=async a=>{_cache.materials=a;await fbSet('materials',a);};
+const getFormulas=()=>_cache.formulas||DEF_FORMULAS;
+const setFormulas=async a=>{_cache.formulas=a;await fbSet('formulas',a);};
+const getBatches=()=>_cache.batches||[];
+const saveBatches=async a=>{_cache.batches=a;await fbSet('batches',a);};
+const getOEEStore=()=>_cache.oee||{};
+const saveOEEStore=async o=>{_cache.oee=o;await fbSet('oee_store',o);};
+
+let editingId=null;
+
+// ===================================================
+// INIT
+// ===================================================
+function renderAll(){
+  buildFormulaSelect();
+  buildMatGrid();
+  fillFormulaFilter();
+  renderBatches();
+  renderMakhzoun();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setToday();
+  fillMonthSelect();
+  fillYearSelect();
+  initOEEDates();
+  window.addEventListener('online',updateOffline);
+  window.addEventListener('offline',updateOffline);
+  updateOffline();
+  document.getElementById('f-date').addEventListener('change',function(){
+    document.getElementById('f-day').value=DAYS[new Date(this.value+'T00:00:00').getDay()];
+  });
+  document.getElementById('print-day-input').value=new Date().toISOString().split('T')[0];
+  // تحميل البيانات من Firebase
+  loadAllData();
+});
+
+function updateOffline(){
+  document.getElementById('offline-banner').style.display=navigator.onLine?'none':'block';
+}
+function setToday(){
+  const d=new Date();
+  document.getElementById('f-date').value=d.toISOString().split('T')[0];
+  document.getElementById('f-day').value=DAYS[d.getDay()];
+}
+function buildFormulaSelect(sel){
+  const el=sel||document.getElementById('f-formula');
+  el.innerHTML='<option value="">اختر</option>'+getFormulas().map(f=>`<option>${f}</option>`).join('');
+}
+function buildMatGrid(){
+  document.getElementById('mat-grid').innerHTML=getMats().map((m,i)=>`
+    <div class="mat-item">
+      <label>${m}</label>
+      <input type="number" id="mat-${i}" placeholder="0" min="0" step="0.01">
+      <span class="mat-unit">كجم</span>
+    </div>`).join('');
+}
+function fillFormulaFilter(){
+  const sel=document.getElementById('f-filter-formula');
+  sel.innerHTML='<option value="">الكل</option>'+getFormulas().map(f=>`<option>${f}</option>`).join('');
+}
+
+// ===================================================
+// NAV
+// ===================================================
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const pages=['page-entry','page-batches','page-makhzoun','page-stats','page-oee'];
+  document.querySelectorAll('.nav-tab')[pages.indexOf(id)].classList.add('active');
+  if(id==='page-batches') renderBatches();
+  if(id==='page-makhzoun') renderMakhzoun();
+  if(id==='page-stats') renderStats();
+}
+
+// ===================================================
+// FORM HELPERS
+// ===================================================
+function getFormData(){
+  const mats=getMats();
+  const matVals={};
+  mats.forEach((m,i)=>{const v=parseFloat(document.getElementById('mat-'+i)?.value)||0;if(v>0)matVals[m]=v;});
+  return{
+    id:Date.now(),
+    date:document.getElementById('f-date').value,
+    day:document.getElementById('f-day').value,
+    batchNum:document.getElementById('f-batch-num').value.trim(),
+    reactor:document.getElementById('f-reactor').value,
+    formula:document.getElementById('f-formula').value,
+    shift:document.getElementById('f-shift').value,
+    waterStart:document.getElementById('f-water-start').value,
+    opStart:document.getElementById('f-op-start').value,
+    sample:document.getElementById('f-sample').value,
+    opEnd:document.getElementById('f-op-end').value,
+    conc:document.getElementById('f-conc').value,
+    visc:document.getElementById('f-visc').value,
+    filter:document.getElementById('f-filter').value,
+    concMid:document.getElementById('f-conc-mid').value,
+    viscMid:document.getElementById('f-visc-mid').value,
+    additions:document.getElementById('f-additions').value,
+    notes:document.getElementById('f-notes').value,
+    materials:matVals,
+  };
+}
+function clearForm(){
+  ['f-batch-num','f-reactor','f-formula','f-shift','f-water-start','f-op-start',
+   'f-sample','f-op-end','f-conc','f-visc','f-filter','f-conc-mid','f-visc-mid','f-additions','f-notes']
+  .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  getMats().forEach((_,i)=>{const el=document.getElementById('mat-'+i);if(el)el.value='';});
+  setToday();
+}
+function showAlert(msg,type='success'){
+  const el=document.getElementById('alert-entry');
+  el.className=`alert alert-${type} show`;el.textContent=msg;
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ===================================================
+// SAVE BATCH (data only, separate from sarf)
+// ===================================================
+async function saveBatch(){
+  const d=getFormData();
+  if(!d.batchNum){showAlert('ادخل رقم الباتش!','error');return;}
+  if(!d.formula){showAlert('اختر التركيبة!','error');return;}
+  // Don't save materials here — they come from طلب الصرف section separately
+  d.materials={};
+  const batches=getBatches();
+  batches.unshift(d);
+  saveBatches(batches);
+  showAlert('✅ تم حفظ بيانات الباتش — اذهب للسجل لإضافة الخامات لاحقاً');
+  clearForm();
+}
+
+// ===================================================
+// PRINT
+// ===================================================
+function showModal(title,html){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('printArea').innerHTML=html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');}
+
+function sarfHTML(d){
+  // ONLY materials with values
+  const mats=getMats();
+  const usedMats=Object.entries(d.materials||{}).filter(([,v])=>parseFloat(v)>0);
+  const rows=usedMats.length
+    ? usedMats.map(([name,qty],i)=>`
+        <tr><td>${i+1}</td><td>${name}</td><td></td><td>كجم</td>
+        <td style="color:#16a34a;font-weight:700">${qty}</td><td></td></tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:#999;padding:16px">لم تُدخل كميات خامات بعد</td></tr>`;
+  return`<div class="print-doc">
+    <div class="print-doc-header">طلب صرف / (ارتجاع) خامات — إدارة المخازن</div>
+    <div class="print-doc-body">
+      <div class="print-info-grid">
+        <div class="print-info-item"><span class="lbl">رقم الباتش</span><span class="val">${d.batchNum||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">التاريخ</span><span class="val">${d.date||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">المنتج</span><span class="val">${d.formula||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">الحلة</span><span class="val">${d.reactor||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">التشغيلة</span><span class="val">${d.shift||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">اليوم</span><span class="val">${d.day||'—'}</span></div>
+      </div>
+      <table class="print-mat-table">
+        <thead><tr><th>م</th><th>اسم الصنف</th><th>الكود</th><th>الوحدة</th><th>الكمية</th><th>ملاحظات</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="print-sigs" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="print-sig">طالب الصرف<br><br>الاسم: ................<br>التوقيع: ................</div>
+        <div class="print-sig">مدير الإدارة الطالبة<br><br>الاسم: ................<br>التوقيع: ................</div>
+        <div class="print-sig">أمين المخزن<br><br>الاسم: ................<br>التوقيع: ................</div>
+      </div>
+    </div></div>`;
+}
+
+function tasleemHTML(d){
+  return`<div class="print-doc">
+    <div class="print-doc-header">استمارة تسليم منتج تام — CODE: C0501 | PRF-08-01-05</div>
+    <div class="print-doc-body">
+      <div class="print-info-grid">
+        <div class="print-info-item"><span class="lbl">رقم الباتش</span><span class="val">${d.batchNum||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">التاريخ</span><span class="val">${d.date||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">المنتج (التركيبة)</span><span class="val">${d.formula||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">الحلة</span><span class="val">${d.reactor||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">التشغيلة</span><span class="val">${d.shift||'—'}</span></div>
+        <div class="print-info-item"><span class="lbl">التصفية (كجم)</span><span class="val">${d.filter||'—'}</span></div>
+      </div>
+      ${d.additions?`<div class="print-info-item" style="margin-bottom:8px"><span class="lbl">إضافات</span><span class="val">${d.additions}</span></div>`:''}
+      ${d.notes?`<div class="print-info-item"><span class="lbl">ملاحظات</span><span class="val">${d.notes}</span></div>`:''}
+      <div class="print-sigs" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:20px">
+        <div class="print-sig">مسؤول الإنتاج<br><br>الاسم: ........<br>التوقيع: ........</div>
+        <div class="print-sig">مسؤول الجودة<br><br>الاسم: ........<br>التوقيع: ........</div>
+        <div class="print-sig">أمين المخزن<br><br>الاسم: ........<br>التوقيع: ........</div>
+        <div class="print-sig">المدير<br><br>الاسم: ........<br>التوقيع: ........</div>
+      </div>
+    </div></div>`;
+}
+
+function printSarf(){
+  const d=getFormData();
+  if(!d.batchNum){showAlert('ادخل رقم الباتش أولاً!','error');return;}
+  showModal('طلب صرف خامات',sarfHTML(d));
+}
+function printTasleem(){
+  const d=getFormData();
+  if(!d.batchNum){showAlert('ادخل رقم الباتش أولاً!','error');return;}
+  showModal('إذن تسليم منتج تام',tasleemHTML(d));
+}
+function printSarfById(id){const b=getBatches().find(x=>x.id===id);if(b)showModal('طلب صرف خامات',sarfHTML(b));}
+function printTasleemById(id){const b=getBatches().find(x=>x.id===id);if(b)showModal('إذن تسليم منتج تام',tasleemHTML(b));}
+
+// ===================================================
+// BATCHES PAGE — TABLE WITH FILTERS
+// ===================================================
+function calcMins(b){
+  if(!b.opStart||!b.opEnd)return 0;
+  const p=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+  return Math.max(p(b.opEnd)-p(b.opStart),0);
+}
+function clearFilters(){
+  document.getElementById('f-filter-batch').value='';
+  document.getElementById('f-filter-date').value='';
+  document.getElementById('f-filter-formula').value='';
+  renderBatches();
+}
+
+function renderBatches(){
+  const qBatch=(document.getElementById('f-filter-batch')?.value||'').toLowerCase();
+  const qDate=document.getElementById('f-filter-date')?.value||'';
+  const qFormula=document.getElementById('f-filter-formula')?.value||'';
+
+  let batches=getBatches();
+  if(qBatch) batches=batches.filter(b=>(b.batchNum||'').toLowerCase().includes(qBatch));
+  if(qDate) batches=batches.filter(b=>b.date===qDate);
+  if(qFormula) batches=batches.filter(b=>b.formula===qFormula);
+
+  const wrap=document.getElementById('batches-table-wrap');
+  const empty=document.getElementById('empty-batches');
+
+  if(!batches.length){wrap.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  const mats=getMats();
+  const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+
+  let html=`<div class="table-wrap"><table class="reg-table">
+    <thead><tr>
+      <th>رقم الباتش</th><th>التاريخ</th><th>اليوم</th><th>التركيبة</th>
+      <th>الحلة</th><th>التشغيلة</th><th>بدء التشغيل</th><th>الانتهاء</th>
+      <th>وقت التشغيل</th><th>التركيز%</th><th>اللزوجة</th>
+      <th>تركيز نص الشغل</th><th>لزوجة نص الشغل</th><th>التصفية(كجم)</th>
+      ${usedMats.map(m=>`<th style="min-width:90px">${m}</th>`).join('')}
+      <th>إجراءات</th>
+    </tr></thead>
+    <tbody>`;
+
+  batches.forEach(b=>{
+    const mins=calcMins(b);
+    const timeStr=mins?`${Math.floor(mins/60)}س ${mins%60}د`:'—';
+    html+=`<tr>
+      <td><span class="badge badge-blue">${b.batchNum||'—'}</span></td>
+      <td>${b.date||'—'}</td><td>${b.day||'—'}</td>
+      <td><span class="badge badge-green">${b.formula||'—'}</span></td>
+      <td>${b.reactor||'—'}</td><td>${b.shift||'—'}</td>
+      <td>${b.opStart||'—'}</td><td>${b.opEnd||'—'}</td>
+      <td>${timeStr}</td>
+      <td>${b.conc?b.conc+'%':'—'}</td><td>${b.visc||'—'}</td>
+      <td>${b.concMid||'—'}</td><td>${b.viscMid||'—'}</td>
+      <td><b>${b.filter?Number(b.filter).toLocaleString():'—'}</b></td>
+      ${usedMats.map(m=>`<td style="text-align:center">${b.materials?.[m]?`<b style="color:#15803d">${b.materials[m]}</b>`:'—'}</td>`).join('')}
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm btn-primary" onclick="openEdit(${b.id})" title="تعديل">✏️</button>
+          <button class="btn btn-sm btn-accent" onclick="printSarfById(${b.id})" title="طلب الصرف">📋</button>
+          <button class="btn btn-sm btn-success" onclick="printTasleemById(${b.id})" title="إذن التسليم">📄</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteBatch(${b.id})" title="حذف">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  wrap.innerHTML=html;
+}
+
+async function deleteBatch(id){
+  if(!confirm('هتمسح الباتش ده؟'))return;
+  saveBatches(getBatches().filter(b=>b.id!==id));
+  renderBatches();
+}
+
+// ===================================================
+// EDIT MODAL
+// ===================================================
+function openEdit(id){
+  editingId=id;
+  const b=getBatches().find(x=>x.id===id);
+  if(!b)return;
+  const mats=getMats();
+  const formulas=getFormulas();
+
+  document.getElementById('edit-form-content').innerHTML=`
+    <div class="form-grid">
+      <div class="form-group"><label>التاريخ</label><input type="date" id="e-date" value="${b.date||''}"></div>
+      <div class="form-group"><label>اليوم</label><input type="text" id="e-day" value="${b.day||''}" readonly></div>
+      <div class="form-group"><label>رقم الباتش</label><input type="text" id="e-batch-num" value="${b.batchNum||''}"></div>
+      <div class="form-group"><label>الحلة</label>
+        <select id="e-reactor"><option value="">اختر</option><option ${b.reactor==='1'?'selected':''}>1</option><option ${b.reactor==='2'?'selected':''}>2</option><option ${b.reactor==='3'?'selected':''}>3</option></select>
+      </div>
+      <div class="form-group"><label>التركيبة</label>
+        <select id="e-formula"><option value="">اختر</option>${formulas.map(f=>`<option ${b.formula===f?'selected':''}>${f}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>التشغيلة</label>
+        <select id="e-shift"><option value="">اختر</option><option ${b.shift==='الأولى'?'selected':''}>الأولى</option><option ${b.shift==='الثانية'?'selected':''}>الثانية</option><option ${b.shift==='الثالثة'?'selected':''}>الثالثة</option></select>
+      </div>
+      <div class="form-group"><label>بدء ملء الماء</label><input type="time" id="e-water-start" value="${b.waterStart||''}"></div>
+      <div class="form-group"><label>بدء التشغيل</label><input type="time" id="e-op-start" value="${b.opStart||''}"></div>
+      <div class="form-group"><label>دخول العينة</label><input type="time" id="e-sample" value="${b.sample||''}"></div>
+      <div class="form-group"><label>انتهاء التشغيلة</label><input type="time" id="e-op-end" value="${b.opEnd||''}"></div>
+      <div class="form-group"><label>التركيز %</label><input type="number" id="e-conc" step=".01" value="${b.conc||''}"></div>
+      <div class="form-group"><label>اللزوجة</label><input type="number" id="e-visc" value="${b.visc||''}"></div>
+      <div class="form-group"><label>التصفية (كجم)</label><input type="number" id="e-filter" value="${b.filter||''}"></div>
+      <div class="form-group"><label>تركيز نص الشغل %</label><input type="number" id="e-conc-mid" step=".01" value="${b.concMid||''}"></div>
+      <div class="form-group"><label>لزوجة نص الشغل</label><input type="number" id="e-visc-mid" value="${b.viscMid||''}"></div>
+    </div>
+    <div class="form-group"><label>إضافات</label><textarea id="e-additions">${b.additions||''}</textarea></div>
+    <div class="form-group" style="margin-top:10px"><label>ملاحظات</label><textarea id="e-notes">${b.notes||''}</textarea></div>
+    <div style="margin-top:14px">
+      <div style="font-size:.85rem;font-weight:700;color:var(--primary);margin-bottom:8px">🧪 الخامات</div>
+      <div class="mat-grid">${mats.map((m,i)=>`
+        <div class="mat-item">
+          <label>${m}</label>
+          <input type="number" id="em-${i}" value="${b.materials?.[m]||''}" placeholder="0" min="0" step="0.01">
+          <span class="mat-unit">كجم</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+  document.getElementById('e-date').addEventListener('change',function(){
+    document.getElementById('e-day').value=DAYS[new Date(this.value+'T00:00:00').getDay()];
+  });
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function saveEdit(){
+  if(!editingId)return;
+  const mats=getMats();
+  const matVals={};
+  mats.forEach((m,i)=>{const v=parseFloat(document.getElementById('em-'+i)?.value)||0;if(v>0)matVals[m]=v;});
+  const batches=getBatches();
+  const idx=batches.findIndex(b=>b.id===editingId);
+  if(idx<0)return;
+  batches[idx]={
+    ...batches[idx],
+    date:document.getElementById('e-date').value,
+    day:document.getElementById('e-day').value,
+    batchNum:document.getElementById('e-batch-num').value.trim(),
+    reactor:document.getElementById('e-reactor').value,
+    formula:document.getElementById('e-formula').value,
+    shift:document.getElementById('e-shift').value,
+    waterStart:document.getElementById('e-water-start').value,
+    opStart:document.getElementById('e-op-start').value,
+    sample:document.getElementById('e-sample').value,
+    opEnd:document.getElementById('e-op-end').value,
+    conc:document.getElementById('e-conc').value,
+    visc:document.getElementById('e-visc').value,
+    filter:document.getElementById('e-filter').value,
+    concMid:document.getElementById('e-conc-mid').value,
+    viscMid:document.getElementById('e-visc-mid').value,
+    additions:document.getElementById('e-additions').value,
+    notes:document.getElementById('e-notes').value,
+    materials:matVals,
+  };
+  saveBatches(batches);
+  closeEditModal();
+  renderBatches();
+  alert('✅ تم حفظ التعديلات!');
+}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('show');editingId=null;}
+
+// ===================================================
+// DAILY PRINT & EXPORT
+// ===================================================
+function getDayBatches(){
+  const date=document.getElementById('print-day-input').value;
+  if(!date){alert('اختر التاريخ!');return null;}
+  const batches=getBatches().filter(b=>b.date===date);
+  if(!batches.length){alert('لا يوجد باتشات في هذا اليوم!');return null;}
+  return{date,batches};
+}
+
+function printDayReport(){
+  const r=getDayBatches();if(!r)return;
+  const{date,batches}=r;
+  const mats=getMats();
+  const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+
+  let rows=batches.map((b,i)=>{
+    const mins=calcMins(b);
+    return`<tr>
+      <td>${i+1}</td><td>${b.batchNum||'—'}</td><td>${b.formula||'—'}</td>
+      <td>${b.reactor||'—'}</td><td>${b.shift||'—'}</td>
+      <td>${b.opStart||'—'}</td><td>${b.opEnd||'—'}</td>
+      <td>${mins?Math.floor(mins/60)+'س '+mins%60+'د':'—'}</td>
+      <td>${b.conc?b.conc+'%':'—'}</td><td>${b.filter?Number(b.filter).toLocaleString():'—'}</td>
+      ${usedMats.map(m=>`<td>${b.materials?.[m]||'—'}</td>`).join('')}
+    </tr>`;}).join('');
+
+  const totFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const totMins=batches.reduce((s,b)=>s+calcMins(b),0);
+
+  showModal('التقرير اليومي — '+date,`
+    <div class="print-doc">
+      <div class="print-doc-header">التقرير اليومي — ${date} | إجمالي الباتشات: ${batches.length}</div>
+      <div class="print-doc-body" style="overflow-x:auto">
+        <table class="daily-print-table">
+          <thead><tr>
+            <th>#</th><th>رقم الباتش</th><th>التركيبة</th><th>الحلة</th><th>التشغيلة</th>
+            <th>بدء التشغيل</th><th>الانتهاء</th><th>وقت التشغيل</th>
+            <th>التركيز%</th><th>التصفية(كجم)</th>
+            ${usedMats.map(m=>`<th>${m}</th>`).join('')}
+          </tr></thead>
+          <tbody>${rows}
+            <tr style="background:#f0f4f8;font-weight:700">
+              <td colspan="9">الإجمالي</td>
+              <td>${totFilter.toLocaleString()} كجم</td>
+              ${usedMats.map(m=>{
+                const t=batches.reduce((s,b)=>s+(parseFloat(b.materials?.[m])||0),0);
+                return`<td>${t||'—'}</td>`;}).join('')}
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;font-size:.82rem;color:var(--muted)">
+          إجمالي وقت التشغيل: ${Math.floor(totMins/60)}س ${totMins%60}د |
+          إجمالي التصفية: ${(totFilter/1000).toFixed(3)} طن
+        </div>
+      </div>
+    </div>`);
+}
+
+function exportDayExcel(){
+  const r=getDayBatches();if(!r)return;
+  const{date,batches}=r;
+
+  // التقرير اليومي فقط — بدون مسحوبات
+  const headers=['#','رقم الباتش','التاريخ','اليوم','التركيبة','الحلة','التشغيلة',
+    'بدء ملء الماء','بدء التشغيل','دخول العينة','انتهاء التشغيلة',
+    'وقت التشغيل(دقيقة)','التركيز%','اللزوجة','تركيز نص الشغل',
+    'لزوجة نص الشغل','التصفية(كجم)','التصفية(طن)','إضافات','ملاحظات'];
+  const rows=batches.map((b,i)=>[
+    i+1,b.batchNum,b.date,b.day,b.formula,b.reactor,b.shift,
+    b.waterStart,b.opStart,b.sample,b.opEnd,
+    calcMins(b),b.conc,b.visc,b.concMid,b.viscMid,
+    b.filter,(parseFloat(b.filter)||0)/1000,b.additions,b.notes
+  ]);
+  const totFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const totMins=batches.reduce((s,b)=>s+calcMins(b),0);
+  rows.push(['الإجمالي','','','','','','','','','','',
+    totMins,'','','','',totFilter,(totFilter/1000).toFixed(3),'','']);
+
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+
+  // Column widths
+  ws['!cols']=[{wch:4},{wch:16},{wch:12},{wch:10},{wch:10},{wch:6},{wch:10},
+    {wch:10},{wch:10},{wch:10},{wch:12},{wch:12},{wch:10},{wch:10},{wch:12},
+    {wch:12},{wch:14},{wch:12},{wch:20},{wch:20}];
+
+  // Styles via cell properties
+  const primaryColor='1A3A5C',accentColor='E8A020',successColor='16A34A',
+        lightBlue='DCE6F1',lightGreen='DCFCE7',lightYellow='FEF9C3';
+
+  // Header row style
+  const headerRange=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=headerRange.s.c;c<=headerRange.e.c;c++){
+    const addr=XLSX.utils.encode_cell({r:0,c});
+    if(!ws[addr])continue;
+    ws[addr].s={
+      fill:{fgColor:{rgb:primaryColor}},
+      font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:10},
+      alignment:{horizontal:'center',vertical:'center',wrapText:true},
+      border:{top:{style:'thin',color:{rgb:'FFFFFF'}},bottom:{style:'thin',color:{rgb:'FFFFFF'}},
+              left:{style:'thin',color:{rgb:'FFFFFF'}},right:{style:'thin',color:{rgb:'FFFFFF'}}}
+    };
+  }
+
+  // Data rows styling
+  for(let r=1;r<rows.length;r++){
+    const isTotal=r===rows.length-1;
+    const isEven=r%2===0;
+    const bgColor=isTotal?lightYellow:isEven?lightBlue:'FFFFFF';
+    for(let c=headerRange.s.c;c<=headerRange.e.c;c++){
+      const addr=XLSX.utils.encode_cell({r,c});
+      if(!ws[addr])ws[addr]={v:'',t:'s'};
+      ws[addr].s={
+        fill:{fgColor:{rgb:bgColor}},
+        font:{bold:isTotal,name:'Cairo',sz:9,
+              color:{rgb:isTotal?primaryColor:(c===16||c===17)?successColor:'1E293B'}},
+        alignment:{horizontal:c===0?'center':'right',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},
+                left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}
+      };
+    }
+  }
+
+  // Row heights
+  ws['!rows']=[{hpt:22},...rows.map((_,i)=>({hpt:i===rows.length-1?20:18}))];
+
+  // Title row above headers
+  XLSX.utils.sheet_add_aoa(ws,[
+    [`التقرير اليومي — ${date} | عدد الباتشات: ${batches.length} | إجمالي التصفية: ${(totFilter/1000).toFixed(3)} طن | وقت التشغيل: ${Math.floor(totMins/60)}س ${totMins%60}د`]
+  ],{origin:'A1',shiftRows:true});
+
+  // Style title cell
+  ws['A1'].s={
+    fill:{fgColor:{rgb:accentColor}},
+    font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:12},
+    alignment:{horizontal:'center',vertical:'center'}
+  };
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:headers.length-1}}];
+  ws['!rows']=[{hpt:28},...ws['!rows']];
+
+  XLSX.utils.book_append_sheet(wb,ws,'التقرير اليومي');
+  XLSX.writeFile(wb,`تقرير_${date}.xlsx`);
+}
+
+// ===================================================
+// SNAPSHOT FOR WHATSAPP — Full report, no makhzoun
+// ===================================================
+async function snapDay(){
+  const r=getDayBatches();if(!r)return;
+  const{date,batches}=r;
+  const totFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const totMins=batches.reduce((s,b)=>s+calcMins(b),0);
+
+  // إجمالي كل تركيبة
+  const fMap={};
+  batches.forEach(b=>{
+    if(!b.formula)return;
+    if(!fMap[b.formula])fMap[b.formula]={count:0,filter:0};
+    fMap[b.formula].count++;
+    fMap[b.formula].filter+=parseFloat(b.filter)||0;
+  });
+  const formulaRows=Object.entries(fMap).map(([f,v])=>`
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;color:#1a3a5c">${f}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${v.count}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:700;color:#16a34a">${v.filter.toLocaleString()} كجم</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:700;color:#16a34a">${(v.filter/1000).toFixed(3)} طن</td>
+    </tr>`).join('');
+
+  const div=document.createElement('div');
+  div.style.cssText='position:fixed;top:-9999px;left:-9999px;width:820px;background:#fff;font-family:Cairo,sans-serif;direction:rtl;padding:0;border-radius:12px;overflow:hidden';
+
+  div.innerHTML=`
+    <div style="background:#1a3a5c;color:#fff;padding:16px 20px;text-align:center">
+      <div style="font-size:1.3rem;font-weight:900">🏭 التقرير اليومي</div>
+      <div style="font-size:.9rem;opacity:.85;margin-top:4px">${date} — ${batches[0]?.day||''}</div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px;background:#f0f4f8">
+      <div style="background:#1a3a5c;color:#fff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:1.8rem;font-weight:900">${batches.length}</div>
+        <div style="font-size:.76rem;opacity:.85">عدد الباتشات</div>
+      </div>
+      <div style="background:#e8a020;color:#fff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:1.8rem;font-weight:900">${(totFilter/1000).toFixed(3)}</div>
+        <div style="font-size:.76rem;opacity:.85">طن — إجمالي الإنتاج</div>
+      </div>
+      <div style="background:#16a34a;color:#fff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:1.8rem;font-weight:900">${Math.floor(totMins/60)}س ${totMins%60}د</div>
+        <div style="font-size:.76rem;opacity:.85">إجمالي وقت التشغيل</div>
+      </div>
+    </div>
+
+    <!-- تفاصيل الباتشات -->
+    <div style="padding:0 16px 8px">
+      <div style="font-size:.85rem;font-weight:900;color:#1a3a5c;padding:8px 0 6px">📋 تفاصيل الباتشات</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+        <thead>
+          <tr style="background:#1a3a5c;color:#fff">
+            <th style="padding:8px 10px;text-align:right">#</th>
+            <th style="padding:8px 10px;text-align:right">رقم الباتش</th>
+            <th style="padding:8px 10px;text-align:right">التركيبة</th>
+            <th style="padding:8px 10px;text-align:right">الحلة</th>
+            <th style="padding:8px 10px;text-align:right">التشغيلة</th>
+            <th style="padding:8px 10px;text-align:right">بدء</th>
+            <th style="padding:8px 10px;text-align:right">انتهاء</th>
+            <th style="padding:8px 10px;text-align:right">وقت التشغيل</th>
+            <th style="padding:8px 10px;text-align:right">التصفية(كجم)</th>
+            <th style="padding:8px 10px;text-align:right">التركيز%</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${batches.map((b,i)=>{
+            const mins=calcMins(b);
+            return`<tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${i+1}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;color:#1a3a5c">${b.batchNum||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0"><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:20px;font-weight:700;font-size:.72rem">${b.formula||'—'}</span></td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${b.reactor||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${b.shift||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${b.opStart||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${b.opEnd||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;color:#7c3aed">${mins?Math.floor(mins/60)+'س '+mins%60+'د':'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;color:#16a34a">${b.filter?Number(b.filter).toLocaleString():'—'}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${b.conc?b.conc+'%':'—'}</td>
+            </tr>`;}).join('')}
+          <tr style="background:#fef9c3;font-weight:700">
+            <td colspan="7" style="padding:8px 10px;color:#1a3a5c;font-weight:900">الإجمالي</td>
+            <td style="padding:8px 10px;color:#7c3aed;font-weight:900">${Math.floor(totMins/60)}س ${totMins%60}د</td>
+            <td style="padding:8px 10px;color:#16a34a;font-weight:900">${totFilter.toLocaleString()} كجم</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- إجمالي كل تركيبة -->
+    <div style="padding:8px 16px 16px">
+      <div style="font-size:.85rem;font-weight:900;color:#1a3a5c;padding:6px 0">📦 إجمالي الإنتاج بالتركيبة</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+        <thead>
+          <tr style="background:#e8a020;color:#fff">
+            <th style="padding:8px 10px;text-align:right">التركيبة</th>
+            <th style="padding:8px 10px;text-align:center">عدد الباتشات</th>
+            <th style="padding:8px 10px;text-align:center">إجمالي (كجم)</th>
+            <th style="padding:8px 10px;text-align:center">إجمالي (طن)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${formulaRows}
+          <tr style="background:#fef9c3;font-weight:900">
+            <td style="padding:8px 10px;color:#1a3a5c">الإجمالي الكلي</td>
+            <td style="padding:8px 10px;text-align:center;color:#1a3a5c">${batches.length}</td>
+            <td style="padding:8px 10px;text-align:center;color:#16a34a">${totFilter.toLocaleString()} كجم</td>
+            <td style="padding:8px 10px;text-align:center;color:#16a34a">${(totFilter/1000).toFixed(3)} طن</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background:#f8fafc;padding:10px 16px;font-size:.72rem;color:#64748b;text-align:center;border-top:1px solid #e2e8f0">
+      نظام إدارة الإنتاج | ${new Date().toLocaleString('ar-EG')}
+    </div>`;
+
+  document.body.appendChild(div);
+  try{
+    const canvas=await html2canvas(div,{scale:2,useCORS:true,backgroundColor:'#fff',scrollX:0,scrollY:0});
+    document.body.removeChild(div);
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      if(navigator.share&&navigator.canShare({files:[new File([blob],'تقرير.png',{type:'image/png'})]})){
+        navigator.share({title:`التقرير اليومي ${date}`,files:[new File([blob],'تقرير.png',{type:'image/png'})]}).catch(()=>{});
+      } else {
+        const a=document.createElement('a');a.href=url;a.download=`تقرير_${date}.png`;a.click();
+        setTimeout(()=>URL.revokeObjectURL(url),2000);
+        alert('📸 تم تحميل الصورة! افتحها وشاركها على واتساب');
+      }
+    },'image/png');
+  }catch(e){
+    if(document.body.contains(div))document.body.removeChild(div);
+    alert('حدث خطأ في إنشاء الصورة');
+  }
+}
+
+// ===================================================
+// FORMULA MANAGEMENT
+// ===================================================
+function openAddFormula(){
+  renderFormulaList();
+  document.getElementById('add-formula-modal').classList.add('show');
+}
+function renderFormulaList(){
+  const formulas=getFormulas();
+  document.getElementById('formula-list-manage').innerHTML=formulas.map((f,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;
+      background:${i%2===0?'#f8fafc':'#fff'};border-radius:8px;margin-bottom:4px">
+      <span style="font-weight:700;color:#1a3a5c">${f}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteFormula('${f}')">🗑️</button>
+    </div>`).join('');
+}
+function addNewFormula(){
+  const name=document.getElementById('new-formula-name').value.trim();
+  if(!name){alert('ادخل اسم التركيبة!');return;}
+  const formulas=getFormulas();
+  if(formulas.includes(name)){alert('التركيبة موجودة!');return;}
+  formulas.push(name);
+  localStorage.setItem('formulas',JSON.stringify(formulas));
+  document.getElementById('new-formula-name').value='';
+  buildFormulaSelect();fillFormulaFilter();renderFormulaList();
+  showAlert('✅ تمت إضافة التركيبة: '+name);
+}
+function deleteFormula(name){
+  if(!confirm(`هتمسح التركيبة "${name}"؟`))return;
+  const formulas=getFormulas().filter(f=>f!==name);
+  localStorage.setItem('formulas',JSON.stringify(formulas));
+  buildFormulaSelect();fillFormulaFilter();renderFormulaList();
+}
+
+function exportAllExcel(){
+  const batches=getBatches();
+  if(!batches.length){alert('لا يوجد بيانات!');return;}
+  const mats=getMats();
+  const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+  const today=new Date().toISOString().slice(0,10);
+  const totalFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const totalMins=batches.reduce((s,b)=>s+calcMins(b),0);
+
+  // === Sheet 1: الباتشات الكاملة ===
+  const headers=['التاريخ','اليوم','رقم الباتش','التركيبة','الحلة','التشغيلة',
+    'بدء التشغيل','الانتهاء','وقت التشغيل(دقيقة)','وقت التشغيل','التركيز%','اللزوجة',
+    'تركيز نص الشغل','لزوجة نص الشغل','التصفية(كجم)','التصفية(طن)',
+    'إضافات','ملاحظات',...usedMats];
+  const rows=batches.map(b=>{
+    const mins=calcMins(b);
+    return[b.date,b.day,b.batchNum,b.formula,b.reactor,b.shift,
+      b.opStart,b.opEnd,mins,mins?Math.floor(mins/60)+'س '+mins%60+'د':'—',
+      b.conc,b.visc,b.concMid,b.viscMid,
+      parseFloat(b.filter)||0,(parseFloat(b.filter)||0)/1000,b.additions||'',b.notes||'',
+      ...usedMats.map(m=>b.materials?.[m]||'')];
+  });
+  const totRow=['الإجمالي','','','','','','','',totalMins,Math.floor(totalMins/60)+'س '+totalMins%60+'د',
+    '','','','',totalFilter,(totalFilter/1000).toFixed(3),'','',...usedMats.map(m=>batches.reduce((s,b)=>s+(parseFloat(b.materials?.[m])||0),0))];
+
+  const wb=XLSX.utils.book_new();
+  const titleRow=[`السجل الكامل — حتى ${today} | إجمالي الباتشات: ${batches.length} | إجمالي الإنتاج: ${(totalFilter/1000).toFixed(3)} طن | وقت التشغيل: ${Math.floor(totalMins/60)}س ${totalMins%60}د`];
+  const ws=XLSX.utils.aoa_to_sheet([titleRow,headers,...rows,totRow]);
+
+  const primaryColor='1A3A5C',accentColor='E8A020',successColor='16A34A',
+        lightBlue='DBEAFE',lightGreen='DCFCE7',lightYellow='FEF9C3',dangerColor='DC2626';
+  const totalCols=headers.length;
+
+  // Title row style
+  ws['A1'].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:13},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:totalCols-1}}];
+
+  // Header row (row index 1)
+  for(let c=0;c<totalCols;c++){
+    const addr=XLSX.utils.encode_cell({r:1,c});
+    if(!ws[addr])continue;
+    ws[addr].s={fill:{fgColor:{rgb:primaryColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:9},
+      alignment:{horizontal:'center',vertical:'center',wrapText:true},
+      border:{top:{style:'thin',color:{rgb:'AAAAAA'}},bottom:{style:'thin',color:{rgb:'AAAAAA'}},
+              left:{style:'thin',color:{rgb:'AAAAAA'}},right:{style:'thin',color:{rgb:'AAAAAA'}}}};
+  }
+
+  // Data rows (start at index 2)
+  for(let r=0;r<rows.length;r++){
+    const isEven=r%2===0;
+    const bgColor=isEven?lightBlue:'FFFFFF';
+    for(let c=0;c<totalCols;c++){
+      const addr=XLSX.utils.encode_cell({r:r+2,c});
+      if(!ws[addr])ws[addr]={v:'',t:'s'};
+      const isFilter=c===14||c===15;
+      const isFormula=c===3;
+      const isTime=c===9;
+      ws[addr].s={fill:{fgColor:{rgb:bgColor}},
+        font:{name:'Cairo',sz:9,bold:isFilter||isFormula,
+              color:{rgb:isFilter?successColor:isFormula?primaryColor:isTime?'7C3AED':'1E293B'}},
+        alignment:{horizontal:c<=1||c===3?'center':'right',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},
+                left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+    }
+  }
+
+  // Total row (last row)
+  const totRowIdx=rows.length+2;
+  for(let c=0;c<totalCols;c++){
+    const addr=XLSX.utils.encode_cell({r:totRowIdx,c});
+    if(!ws[addr])ws[addr]={v:'',t:'s'};
+    ws[addr].s={fill:{fgColor:{rgb:lightYellow}},
+      font:{bold:true,name:'Cairo',sz:10,color:{rgb:c===14||c===15?successColor:primaryColor}},
+      alignment:{horizontal:'center',vertical:'center'},
+      border:{top:{style:'medium',color:{rgb:primaryColor}},bottom:{style:'medium',color:{rgb:primaryColor}},
+              left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+  }
+
+  // Column widths
+  ws['!cols']=[{wch:12},{wch:8},{wch:18},{wch:10},{wch:6},{wch:8},{wch:8},{wch:8},{wch:12},{wch:10},
+    {wch:8},{wch:8},{wch:10},{wch:10},{wch:14},{wch:12},{wch:22},{wch:22},
+    ...usedMats.map(()=>({wch:12}))];
+  ws['!rows']=[{hpt:30},{hpt:22},...rows.map(()=>({hpt:18})),{hpt:22}];
+
+  XLSX.utils.book_append_sheet(wb,ws,'السجل الكامل');
+
+  // === Sheet 2: ملخص التركيبات ===
+  const fMap={};
+  batches.forEach(b=>{if(!b.formula)return;
+    if(!fMap[b.formula])fMap[b.formula]={count:0,filter:0,mins:0};
+    fMap[b.formula].count++;fMap[b.formula].filter+=parseFloat(b.filter)||0;fMap[b.formula].mins+=calcMins(b);});
+  const fHeaders=['التركيبة','عدد الباتشات','إجمالي التصفية (كجم)','إجمالي التصفية (طن)','وقت التشغيل (دقيقة)','وقت التشغيل'];
+  const fRows=Object.entries(fMap).sort((a,b)=>b[1].filter-a[1].filter)
+    .map(([f,v])=>[f,v.count,v.filter,(v.filter/1000).toFixed(3),v.mins,Math.floor(v.mins/60)+'س '+v.mins%60+'د']);
+  fRows.push(['الإجمالي',batches.length,totalFilter,(totalFilter/1000).toFixed(3),totalMins,Math.floor(totalMins/60)+'س '+totalMins%60+'د']);
+
+  const ws2=XLSX.utils.aoa_to_sheet([fHeaders,...fRows]);
+  for(let c=0;c<fHeaders.length;c++){
+    const a=XLSX.utils.encode_cell({r:0,c});if(!ws2[a])continue;
+    ws2[a].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:10},alignment:{horizontal:'center',vertical:'center'}};
+  }
+  for(let r=0;r<fRows.length;r++){
+    const isTotal=r===fRows.length-1;
+    for(let c=0;c<fHeaders.length;c++){
+      const a=XLSX.utils.encode_cell({r:r+1,c});if(!ws2[a])ws2[a]={v:'',t:'s'};
+      ws2[a].s={fill:{fgColor:{rgb:isTotal?lightYellow:r%2===0?lightGreen:'FFFFFF'}},
+        font:{bold:isTotal,name:'Cairo',sz:10,color:{rgb:c>=2&&c<=3?successColor:primaryColor}},
+        alignment:{horizontal:'center',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},
+                left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+    }
+  }
+  ws2['!cols']=[{wch:14},{wch:14},{wch:20},{wch:18},{wch:18},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'ملخص التركيبات');
+
+  XLSX.writeFile(wb,`كل_البيانات_${today}.xlsx`);
+}
+
+// ===================================================
+// MAKHZOUN
+// ===================================================
+function fillMonthSelect(){
+  const sel=document.getElementById('makh-month');
+  const batches=getBatches();
+  const months=new Set(batches.map(b=>b.date?b.date.slice(0,7):'').filter(Boolean));
+  months.add(new Date().toISOString().slice(0,7));
+  sel.innerHTML=[...months].sort().reverse().map(m=>{
+    const[y,mo]=m.split('-');
+    return`<option value="${m}">${MONTHS_AR[parseInt(mo)-1]} ${y}</option>`;
+  }).join('');
+}
+function renderMakhzoun(){
+  const month=document.getElementById('makh-month').value;
+  const batches=getBatches().filter(b=>b.date&&b.date.startsWith(month)).reverse();
+  const mats=getMats();
+  if(!batches.length){
+    document.getElementById('makhzoun-content').innerHTML=
+      '<div class="empty-state"><div class="icon">📭</div><p>لا يوجد باتشات في هذا الشهر</p></div>';
+    return;
+  }
+  const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+  const totals={};usedMats.forEach(m=>totals[m]=0);
+  batches.forEach(b=>usedMats.forEach(m=>{totals[m]+=(parseFloat(b.materials?.[m])||0);}));
+
+  let html=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>رقم الباتش</th><th>التاريخ</th><th>التركيبة</th><th>الحلة</th>
+      ${usedMats.map(m=>`<th style="min-width:80px">${m}</th>`).join('')}
+      <th style="background:#16a34a">إجمالي الباتش (طن)</th>
+    </tr></thead><tbody>`;
+  batches.forEach(b=>{
+    const tot=Object.values(b.materials||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
+    html+=`<tr>
+      <td><span class="badge badge-blue">${b.batchNum||'—'}</span></td>
+      <td>${b.date}</td>
+      <td><span class="badge badge-green">${b.formula||'—'}</span></td>
+      <td>${b.reactor||'—'}</td>
+      ${usedMats.map(m=>`<td style="text-align:center">${b.materials?.[m]?`<b style="color:#15803d">${b.materials[m]}</b>`:'—'}</td>`).join('')}
+      <td style="text-align:center;font-weight:900;color:#16a34a">${(tot/1000).toFixed(3)}</td>
+    </tr>`;
+  });
+  const grand=Object.values(totals).reduce((s,v)=>s+v,0);
+  html+=`<tr class="tr-total">
+    <td colspan="4">إجمالي الشهر</td>
+    ${usedMats.map(m=>`<td style="text-align:center;color:var(--primary)">${totals[m]?totals[m].toLocaleString():''}</td>`).join('')}
+    <td style="text-align:center;color:#16a34a">${(grand/1000).toFixed(3)} طن</td>
+  </tr></tbody></table></div>`;
+
+  html+=`<div class="card" style="margin-top:14px">
+    <div class="card-title">📊 إجمالي الخامات — ${MONTHS_AR[parseInt(month.split('-')[1])-1]}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">
+    ${usedMats.filter(m=>totals[m]>0).map(m=>`
+      <div style="background:var(--green-light);border-radius:9px;padding:9px 13px;border:1.5px solid #bbf7d0">
+        <div style="font-size:.73rem;color:#15803d;font-weight:700">${m}</div>
+        <div style="font-size:1.05rem;font-weight:900;color:#15803d">${totals[m].toLocaleString()} كجم</div>
+      </div>`).join('')}
+    </div></div>`;
+  document.getElementById('makhzoun-content').innerHTML=html;
+}
+function exportMakhzounExcel(){
+  const month=document.getElementById('makh-month').value;
+  const batches=getBatches().filter(b=>b.date&&b.date.startsWith(month)).reverse();
+  const mats=getMats();
+  const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+  const primaryColor='1A3A5C',accentColor='E8A020',successColor='16A34A',
+        lightGreen='DCFCE7',lightYellow='FEF9C3';
+  const [y,mo]=month.split('-');
+  const monthName=MONTHS_AR[parseInt(mo)-1]+' '+y;
+
+  const grand=usedMats.reduce((s,m)=>s+batches.reduce((ss,b)=>ss+(parseFloat(b.materials?.[m])||0),0),0);
+  const headers=['رقم الباتش','التاريخ','التركيبة','الحلة',...usedMats,'إجمالي الباتش(كجم)','إجمالي الباتش(طن)'];
+  const rows=batches.map(b=>{
+    const tot=Object.values(b.materials||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
+    return[b.batchNum,b.date,b.formula,b.reactor,...usedMats.map(m=>b.materials?.[m]||''),tot,(tot/1000).toFixed(3)];
+  });
+  const totals={};usedMats.forEach(m=>totals[m]=batches.reduce((s,b)=>s+(parseFloat(b.materials?.[m])||0),0));
+  rows.push(['إجمالي الشهر','','','',...usedMats.map(m=>totals[m]||''),grand,(grand/1000).toFixed(3)]);
+
+  const titleRow=[`مسحوبات المخزن — ${monthName} | باتشات: ${batches.length} | إجمالي: ${(grand/1000).toFixed(3)} طن`];
+  const ws=XLSX.utils.aoa_to_sheet([titleRow,headers,...rows]);
+  const totalCols=headers.length;
+
+  ws['A1'].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:12},alignment:{horizontal:'center',vertical:'center'}};
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:totalCols-1}}];
+
+  for(let c=0;c<totalCols;c++){
+    const a=XLSX.utils.encode_cell({r:1,c});if(!ws[a])continue;
+    ws[a].s={fill:{fgColor:{rgb:primaryColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:9},alignment:{horizontal:'center',vertical:'center'},
+      border:{top:{style:'thin',color:{rgb:'AAAAAA'}},bottom:{style:'thin',color:{rgb:'AAAAAA'}},left:{style:'thin',color:{rgb:'AAAAAA'}},right:{style:'thin',color:{rgb:'AAAAAA'}}}};
+  }
+
+  for(let r=0;r<rows.length;r++){
+    const isTotal=r===rows.length-1;
+    const bg=isTotal?lightYellow:r%2===0?lightGreen:'FFFFFF';
+    for(let c=0;c<totalCols;c++){
+      const a=XLSX.utils.encode_cell({r:r+2,c});if(!ws[a])ws[a]={v:'',t:'s'};
+      const isQty=c>=4&&c<4+usedMats.length;
+      const isTot=c>=totalCols-2;
+      ws[a].s={fill:{fgColor:{rgb:bg}},
+        font:{bold:isTotal||isTot,name:'Cairo',sz:9,color:{rgb:isTot||isQty?successColor:primaryColor}},
+        alignment:{horizontal:'center',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+    }
+  }
+
+  ws['!cols']=[{wch:18},{wch:12},{wch:10},{wch:6},...usedMats.map(()=>({wch:12})),{wch:16},{wch:14}];
+  ws['!rows']=[{hpt:28},{hpt:22},...rows.map(()=>({hpt:18}))];
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'مسحوبات');
+  XLSX.writeFile(wb,`مسحوبات_${month}.xlsx`);
+}
+
+// ===================================================
+// STATS
+// ===================================================
+let chartProd=null,chartOEELine=null;
+function fillYearSelect(){
+  const sel=document.getElementById('stats-year');
+  const years=new Set(getBatches().map(b=>b.date?b.date.slice(0,4):'').filter(Boolean));
+  years.add(new Date().getFullYear().toString());
+  sel.innerHTML=[...years].sort().reverse().map(y=>`<option>${y}</option>`).join('');
+}
+function renderStats(){
+  const year=document.getElementById('stats-year').value;
+  const batches=getBatches().filter(b=>b.date&&b.date.startsWith(year));
+  const oeeStore=getOEEStore();
+  const formulas=[...new Set(batches.map(b=>b.formula).filter(Boolean))];
+  const monthlyData={};for(let m=0;m<12;m++)monthlyData[m]={};
+  batches.forEach(b=>{if(!b.date)return;const mo=parseInt(b.date.slice(5,7))-1;
+    if(!monthlyData[mo][b.formula])monthlyData[mo][b.formula]=0;
+    monthlyData[mo][b.formula]+=(parseFloat(b.filter)||0)/1000;});
+  const colors=['#1a3a5c','#e8a020','#16a34a','#7c3aed','#dc2626','#0891b2','#db2777','#65a30d'];
+  if(chartProd)chartProd.destroy();
+  chartProd=new Chart(document.getElementById('chart-production').getContext('2d'),{
+    type:'bar',
+    data:{labels:MONTHS_AR,datasets:formulas.map((f,i)=>({
+      label:f,data:Array.from({length:12},(_,m)=>(monthlyData[m][f]||0).toFixed(2)),
+      backgroundColor:colors[i%colors.length]+'cc',borderColor:colors[i%colors.length],borderWidth:1}))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{family:'Cairo'}}}},
+      scales:{x:{ticks:{font:{family:'Cairo'}}},y:{ticks:{font:{family:'Cairo'}},title:{display:true,text:'طن',font:{family:'Cairo'}}}}}
+  });
+  const oeeMonths=Array.from({length:12},(_,m)=>{
+    const k=`${year}-${String(m+1).padStart(2,'0')}`;return oeeStore[k]?.oee||null;});
+  if(chartOEELine)chartOEELine.destroy();
+  chartOEELine=new Chart(document.getElementById('chart-oee').getContext('2d'),{
+    type:'line',
+    data:{labels:MONTHS_AR,datasets:[
+      {label:'OEE %',data:oeeMonths.map(v=>v!=null?(v*100).toFixed(1):null),
+       borderColor:'#7c3aed',backgroundColor:'#7c3aed22',tension:.4,pointRadius:5,spanGaps:false},
+      {label:'هدف 85%',data:Array(12).fill(85),borderColor:'#16a34a',borderDash:[6,4],pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{family:'Cairo'}}}},
+      scales:{x:{ticks:{font:{family:'Cairo'}}},
+              y:{min:0,max:100,ticks:{font:{family:'Cairo'},callback:v=>v+'%'},
+                title:{display:true,text:'OEE %',font:{family:'Cairo'}}}}}
+  });
+  const totalF=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const avgOEE=oeeMonths.filter(v=>v!=null);
+  document.getElementById('stats-cards').innerHTML=`
+    <div class="stat-card blue"><div class="stat-num">${batches.length}</div><div class="stat-lbl">إجمالي الباتشات</div></div>
+    <div class="stat-card orange"><div class="stat-num">${(totalF/1000).toFixed(1)} طن</div><div class="stat-lbl">إجمالي الإنتاج</div></div>
+    <div class="stat-card green"><div class="stat-num">${formulas.length}</div><div class="stat-lbl">تركيبات مختلفة</div></div>
+    ${avgOEE.length?`<div class="stat-card purple"><div class="stat-num">${(avgOEE.reduce((s,v)=>s+v,0)/avgOEE.length*100).toFixed(1)}%</div><div class="stat-lbl">متوسط OEE</div></div>`:''}`;
+  const fMap={};
+  batches.forEach(b=>{if(!b.formula)return;fMap[b.formula]=fMap[b.formula]||{count:0,filter:0};
+    fMap[b.formula].count++;fMap[b.formula].filter+=parseFloat(b.filter)||0;});
+  const totFilter=Object.values(fMap).reduce((s,v)=>s+v.filter,0);
+  document.getElementById('formula-tbody').innerHTML=
+    Object.entries(fMap).sort((a,b)=>b[1].filter-a[1].filter)
+    .map(([f,v])=>`<tr><td><span class="badge badge-green">${f}</span></td><td>${v.count}</td>
+      <td>${v.filter.toLocaleString()} كجم</td><td>${(v.filter/1000).toFixed(2)} طن</td></tr>`).join('')
+    +`<tr class="tr-total"><td>الإجمالي</td><td>${batches.length}</td>
+       <td>${totFilter.toLocaleString()} كجم</td><td>${(totFilter/1000).toFixed(2)} طن</td></tr>`;
+}
+
+// ===================================================
+// OEE
+// ===================================================
+function initOEEDates(){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  document.getElementById('oee-from').value=new Date(y,m,1).toISOString().split('T')[0];
+  document.getElementById('oee-to').value=new Date(y,m+1,0).toISOString().split('T')[0];
+}
+function calcOEE(){
+  const from=document.getElementById('oee-from').value,to=document.getElementById('oee-to').value;
+  const repDays=parseFloat(document.getElementById('oee-days').value)||0;
+  const goodB=parseFloat(document.getElementById('oee-good').value);
+  if(!from||!to){alert('اختر الفترة!');return;}
+  const batches=getBatches().filter(b=>b.date&&b.date>=from&&b.date<=to);
+  const total=batches.length,totalFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+  const totalMins=batches.reduce((s,b)=>s+calcMins(b),0),totalH=totalMins/60,availH=repDays*8;
+  const avail=availH>0?Math.min(totalH/availH,1):0;
+  const perf=availH>0?Math.min(total/availH,1):0;
+  const qual=total>0&&!isNaN(goodB)?Math.min(goodB/total,1):1;
+  const oee=avail*perf*qual;
+  const oeeColor=oee>=.85?'#16a34a':oee>=.65?'#e8a020':'#dc2626';
+  const oeeRating=oee>=.85?'🟢 ممتاز (World Class)':oee>=.65?'🟡 جيد':'🔴 يحتاج تدخل';
+  const monthKey=from.slice(0,7);
+  const store=getOEEStore();store[monthKey]={oee,avail,perf,qual,totalH,availH,total,totalFilter};
+  saveOEEStore(store);
+  document.getElementById('oee-result').style.display='block';
+  document.getElementById('oee-stat-cards').innerHTML=`
+    <div class="stat-card blue"><div class="stat-num">${total}</div><div class="stat-lbl">إجمالي الباتشات</div></div>
+    <div class="stat-card orange"><div class="stat-num">${(totalFilter/1000).toFixed(2)} طن</div><div class="stat-lbl">إجمالي المنتج</div></div>
+    <div class="stat-card green"><div class="stat-num">${totalH.toFixed(1)} س</div><div class="stat-lbl">وقت التشغيل</div></div>
+    <div class="stat-card purple"><div class="stat-num">${(oee*100).toFixed(1)}%</div><div class="stat-lbl">OEE</div></div>`;
+  document.getElementById('oee-gauge').innerHTML=`
+    <div style="font-size:2.6rem;font-weight:900;color:${oeeColor};margin:6px 0">${(oee*100).toFixed(1)}%</div>
+    <div style="background:${oeeColor}20;color:${oeeColor};padding:3px 18px;border-radius:20px;display:inline-block;font-weight:700;margin-bottom:18px">${oeeRating}</div>
+    ${['Availability','Performance','Quality'].map((lbl,i)=>{
+      const vals=[avail,perf,qual],clrs=['#2563a8','#e8a020','#16a34a'];
+      return`<div style="margin-bottom:10px;text-align:right">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;color:#64748b;margin-bottom:3px">
+          <span>${lbl}</span><span>${(vals[i]*100).toFixed(1)}%</span></div>
+        <div class="oee-bar-wrap"><div class="oee-bar" style="width:${(vals[i]*100).toFixed(1)}%;background:${clrs[i]}">${(vals[i]*100).toFixed(1)}%</div></div>
+      </div>`;}).join('')}`;
+  document.getElementById('oee-time-tbody').innerHTML=`
+    <tr><td>الوقت المتاح (8س × ${repDays} يوم)</td><td><b>${availH.toFixed(1)} ساعة</b></td></tr>
+    <tr><td>وقت التشغيل الفعلي</td><td><b>${totalH.toFixed(2)} ساعة</b></td></tr>
+    <tr><td>وقت التوقف</td><td><b style="color:#dc2626">${(availH-totalH).toFixed(2)} ساعة</b></td></tr>
+    <tr class="tr-total"><td>Availability</td><td><b style="color:#2563a8">${(avail*100).toFixed(1)}%</b></td></tr>
+    <tr><td>عدد الباتشات</td><td><b>${total}</b></td></tr>
+    <tr><td>الباتشات السليمة</td><td><b style="color:#16a34a">${isNaN(goodB)?'—':goodB}</b></td></tr>
+    <tr class="tr-total"><td>Quality</td><td><b style="color:#16a34a">${(qual*100).toFixed(1)}%</b></td></tr>
+    <tr class="tr-total"><td>OEE النهائي</td><td><b style="color:${oeeColor};font-size:1.05rem">${(oee*100).toFixed(1)}%</b></td></tr>`;
+  window._oeeData={from,to,oee,avail,perf,qual,totalH,availH,total,totalFilter,batches};
+}
+function exportOEEExcel(){
+  const d=window._oeeData;if(!d){alert('احسب OEE الأول!');return;}
+  const mats=getMats(),matsTotal={};mats.forEach(m=>matsTotal[m]=0);
+  d.batches.forEach(b=>Object.entries(b.materials||{}).forEach(([m,q])=>{if(matsTotal[m]!==undefined)matsTotal[m]+=(parseFloat(q)||0);}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['تقرير OEE',d.from+' إلى '+d.to],[],
+    ['OEE',(d.oee*100).toFixed(1)+'%'],['Availability',(d.avail*100).toFixed(1)+'%'],
+    ['Performance',(d.perf*100).toFixed(1)+'%'],['Quality',(d.qual*100).toFixed(1)+'%'],[],
+    ['إجمالي الباتشات',d.total],['وقت التشغيل (ساعة)',d.totalH.toFixed(2)],
+    ['إجمالي المنتج (طن)',(d.totalFilter/1000).toFixed(2)]]),'OEE');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(
+    [['الخامة','الكمية(كجم)'],...Object.entries(matsTotal).filter(([,v])=>v>0)]),'الخامات');
+  XLSX.writeFile(wb,`تقرير_OEE_${d.from}.xlsx`);
+}
+
+// ===================================================
+// ADD MATERIAL
+// ===================================================
+function openAddMat(){document.getElementById('add-mat-modal').classList.add('show');}
+async function addNewMaterial(){
+  const name=document.getElementById('new-mat-name').value.trim();
+  if(!name){alert('ادخل اسم الخامة!');return;}
+  const mats=getMats();
+  if(mats.includes(name)){alert('الخامة موجودة!');return;}
+  mats.push(name);setMats(mats);buildMatGrid();
+  document.getElementById('add-mat-modal').classList.remove('show');
+  document.getElementById('new-mat-name').value='';
+  showAlert('✅ تمت إضافة: '+name);
+}
+
+// ===================================================
+// BACKUP EXCEL — كل البيانات في أي وقت
+// ===================================================
+function exportBackupExcel(){
+  const batches=getBatches();
+  const mats=getMats();
+  const formulas=getFormulas();
+  const today=new Date().toISOString().slice(0,10);
+  const wb=XLSX.utils.book_new();
+  const primaryColor='1A3A5C',accentColor='E8A020',successColor='16A34A',
+        lightBlue='DBEAFE',lightGreen='DCFCE7',lightYellow='FEF9C3';
+
+  if(batches.length){
+    const usedMats=mats.filter(m=>batches.some(b=>b.materials?.[m]));
+    const totalFilter=batches.reduce((s,b)=>s+(parseFloat(b.filter)||0),0);
+    const totalMins=batches.reduce((s,b)=>s+calcMins(b),0);
+    const headers=['التاريخ','اليوم','رقم الباتش','التركيبة','الحلة','التشغيلة',
+      'بدء التشغيل','الانتهاء','وقت التشغيل(دقيقة)','وقت التشغيل','التركيز%','اللزوجة',
+      'تركيز نص الشغل','لزوجة نص الشغل','التصفية(كجم)','التصفية(طن)','إضافات','ملاحظات',...usedMats];
+    const rows=batches.map(b=>{
+      const mins=calcMins(b);
+      return[b.date,b.day,b.batchNum,b.formula,b.reactor,b.shift,
+        b.opStart,b.opEnd,mins,mins?Math.floor(mins/60)+'س '+mins%60+'د':'—',
+        b.conc,b.visc,b.concMid,b.viscMid,
+        parseFloat(b.filter)||0,(parseFloat(b.filter)||0)/1000,b.additions||'',b.notes||'',
+        ...usedMats.map(m=>b.materials?.[m]||'')];
+    });
+    const totRow=['الإجمالي','','','','','','','',totalMins,Math.floor(totalMins/60)+'س '+totalMins%60+'د',
+      '','','','',totalFilter,(totalFilter/1000).toFixed(3),'','',...usedMats.map(m=>batches.reduce((s,b)=>s+(parseFloat(b.materials?.[m])||0),0))];
+    const titleRow=[`نسخة احتياطية — ${today} | باتشات: ${batches.length} | إنتاج: ${(totalFilter/1000).toFixed(3)} طن`];
+    const ws=XLSX.utils.aoa_to_sheet([titleRow,headers,...rows,totRow]);
+    const totalCols=headers.length;
+    ws['A1'].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:12},alignment:{horizontal:'center',vertical:'center'}};
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:totalCols-1}}];
+    for(let c=0;c<totalCols;c++){
+      const a=XLSX.utils.encode_cell({r:1,c});if(!ws[a])continue;
+      ws[a].s={fill:{fgColor:{rgb:primaryColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:9},alignment:{horizontal:'center',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:'AAAAAA'}},bottom:{style:'thin',color:{rgb:'AAAAAA'}},left:{style:'thin',color:{rgb:'AAAAAA'}},right:{style:'thin',color:{rgb:'AAAAAA'}}}};
+    }
+    for(let r=0;r<rows.length;r++){
+      const bg=r%2===0?lightBlue:'FFFFFF';
+      for(let c=0;c<totalCols;c++){
+        const a=XLSX.utils.encode_cell({r:r+2,c});if(!ws[a])ws[a]={v:'',t:'s'};
+        ws[a].s={fill:{fgColor:{rgb:bg}},font:{name:'Cairo',sz:9,bold:c===14||c===15,
+          color:{rgb:c===14||c===15?successColor:c===3?primaryColor:c===9?'7C3AED':'1E293B'}},
+          alignment:{horizontal:'right',vertical:'center'},
+          border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+      }
+    }
+    const totIdx=rows.length+2;
+    for(let c=0;c<totalCols;c++){
+      const a=XLSX.utils.encode_cell({r:totIdx,c});if(!ws[a])ws[a]={v:'',t:'s'};
+      ws[a].s={fill:{fgColor:{rgb:lightYellow}},font:{bold:true,name:'Cairo',sz:10,color:{rgb:c===14||c===15?successColor:primaryColor}},
+        alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium',color:{rgb:primaryColor}},bottom:{style:'medium',color:{rgb:primaryColor}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};
+    }
+    ws['!cols']=[{wch:12},{wch:8},{wch:18},{wch:10},{wch:6},{wch:8},{wch:8},{wch:8},{wch:12},{wch:10},{wch:8},{wch:8},{wch:10},{wch:10},{wch:14},{wch:12},{wch:22},{wch:22},...usedMats.map(()=>({wch:12}))];
+    ws['!rows']=[{hpt:28},{hpt:22},...rows.map(()=>({hpt:18})),{hpt:22}];
+    XLSX.utils.book_append_sheet(wb,ws,'كل الباتشات');
+
+    // Sheet 2: ملخص التركيبات
+    const fMap={};batches.forEach(b=>{if(!b.formula)return;if(!fMap[b.formula])fMap[b.formula]={count:0,filter:0,mins:0};fMap[b.formula].count++;fMap[b.formula].filter+=parseFloat(b.filter)||0;fMap[b.formula].mins+=calcMins(b);});
+    const fH=['التركيبة','عدد الباتشات','إجمالي (كجم)','إجمالي (طن)','وقت التشغيل (دقيقة)','وقت التشغيل'];
+    const fR=Object.entries(fMap).sort((a,b)=>b[1].filter-a[1].filter).map(([f,v])=>[f,v.count,v.filter,(v.filter/1000).toFixed(3),v.mins,Math.floor(v.mins/60)+'س '+v.mins%60+'د']);
+    fR.push(['الإجمالي',batches.length,totalFilter,(totalFilter/1000).toFixed(3),totalMins,Math.floor(totalMins/60)+'س '+totalMins%60+'د']);
+    const ws2=XLSX.utils.aoa_to_sheet([fH,...fR]);
+    for(let c=0;c<fH.length;c++){const a=XLSX.utils.encode_cell({r:0,c});if(!ws2[a])continue;ws2[a].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:10},alignment:{horizontal:'center',vertical:'center'}};}
+    for(let r=0;r<fR.length;r++){const isT=r===fR.length-1;for(let c=0;c<fH.length;c++){const a=XLSX.utils.encode_cell({r:r+1,c});if(!ws2[a])ws2[a]={v:'',t:'s'};ws2[a].s={fill:{fgColor:{rgb:isT?lightYellow:r%2===0?lightGreen:'FFFFFF'}},font:{bold:isT,name:'Cairo',sz:10,color:{rgb:c>=2&&c<=3?successColor:primaryColor}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}}};}}
+    ws2['!cols']=[{wch:14},{wch:14},{wch:18},{wch:16},{wch:18},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws2,'ملخص التركيبات');
+  }
+
+  // Sheet 3: الخامات والتركيبات المحفوظة
+  const cfData=[['الخامات المحفوظة'],[''],['اسم الخامة'],...mats.map(m=>[m])];
+  const ws3=XLSX.utils.aoa_to_sheet(cfData);
+  ws3['A1'].s={fill:{fgColor:{rgb:primaryColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:11},alignment:{horizontal:'center'}};
+  ws3['A3'].s={fill:{fgColor:{rgb:accentColor}},font:{bold:true,color:{rgb:'FFFFFF'},name:'Cairo',sz:9},alignment:{horizontal:'center'}};
+  ws3['!cols']=[{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws3,'الخامات والتركيبات');
+
+  XLSX.writeFile(wb,`نسخة_احتياطية_${today}.xlsx`);
+  alert(`✅ تم حفظ النسخة الاحتياطية!\n📊 ${batches.length} باتش | ${mats.length} خامة`);
+}
+
+// ===================================================
+// STORAGE INFO
+// ===================================================
+function openStorageInfo(){
+  const batches=getBatches();
+  const mats=getMats();
+  let size=0;
+  try{['batches','materials','formulas','oee_store'].forEach(k=>{size+=localStorage.getItem(k)?.length||0;});}catch{}
+  document.getElementById('storage-stats').innerHTML=
+    `📊 ${batches.length} باتش | ${mats.length} خامة | حجم البيانات: ~${(size/1024).toFixed(1)} كيلوبايت`;
+  document.getElementById('storage-info-modal').classList.add('show');
+}
+
+// SW for offline
+if('serviceWorker' in navigator){
+  const sw=`const C='factory-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('/'))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/')))));`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+</script>
+</body>
+</html>
